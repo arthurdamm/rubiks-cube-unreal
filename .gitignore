@@ -1,0 +1,39 @@
+# Unreal Engine 5 specifics
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+Build/
+
+# Editor specific
+.vs/
+.vscode/
+# .idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# User-specific files
+# *.ini
+# *.user
+# *.userprefs
+# *.suo
+*.log
+# *.opensdf
+# *.sdf
+# *.opendb
+# *.unoproj
+*.pidb
+Cache/
+# *.lock.json
+
+# uasset files of MedievalDungeon exceed github 2GB limits
+Content/MedievalDungeon/
+# Content/MedievalDungeon/*
+
+# Build output
+/Scripts/build/
+
+windows/
+Android_ASTC/
