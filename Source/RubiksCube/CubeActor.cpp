@@ -56,10 +56,15 @@ void ACubeActor::BeginPlay()
                     CubesAtLayer[3 + j].push_back(NewCube);
                     CubesAtLayer[6 + k].push_back(NewCube);
                     
+                    if (j == 1 && k == 1) {
+                        NormalsAtLayer[0 + i] = NewCube->GetActorForwardVector();
+                    }
+                    if (i == 1 && k == 1) {
+                        NormalsAtLayer[3 + j] = NewCube->GetActorForwardVector();
+                    }
                     if (i == 1 && j == 1) {
                         NormalsAtLayer[6 + k] = NewCube->GetActorForwardVector();
                     }
-                    NormalsAtLayer
                 }
             }
         }
@@ -100,17 +105,43 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
         }
 
         FQuat QuatRotation = FQuat(RotationAxis, FMath::DegreesToRadians(DeltaRotation));
-        FVector Center = FVector(1420.000000,1210.000000,1210.000000);
+        FVector RotationCenter = FVector(1420.000000,1210.000000,1210.000000);
+
+        FVector EndPoint;
 
         for (AStaticMeshActor* CubeToRotate : CubesAtLayer[LayerToRotate]) {
             if (CubeToRotate)
             {
-                FVector RelativePosition = CubeToRotate->GetActorLocation() - Center;
+                FVector RelativePosition = CubeToRotate->GetActorLocation() - RotationCenter;
                 FVector RotatedPosition = QuatRotation.RotateVector(RelativePosition);
-                CubeToRotate->SetActorLocation(Center + RotatedPosition);
+                CubeToRotate->SetActorLocation(RotationCenter + RotatedPosition);
                 CubeToRotate->AddActorLocalRotation(QuatRotation);
+
+                EndPoint = CubeToRotate->GetActorLocation() +  CubeToRotate->GetActorForwardVector() * 1000.0f; // Extend the line along the rotation axis
+                DrawDebugLine(
+                    GetWorld(),
+                    CubeToRotate->GetActorLocation(),
+                    EndPoint,
+                    FColor::Red,
+                    false, // Persistent lines
+                    0.1,   // Lifetime
+                    0,     // Depth priority
+                    10.0   // Thickness
+                );
             }
         }
+
+        EndPoint = RotationCenter + RotationAxis * 1000.0f; // Extend the line along the rotation axis
+        DrawDebugLine(
+            GetWorld(),
+            RotationCenter,
+            EndPoint,
+            FColor::Red,
+            false, // Persistent lines
+            0.1,   // Lifetime
+            0,     // Depth priority
+            10.0   // Thickness
+        );
 
     }
 }
