@@ -42,6 +42,7 @@ public:
 
     std::vector<AStaticMeshActor*> CubesAtLayer[9];
     FVector NormalsAtLayer[9];
+    FVector CentersAtLayer[9];
 
 private:
     bool bIsRotating = false;

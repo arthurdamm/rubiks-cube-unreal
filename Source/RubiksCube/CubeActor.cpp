@@ -48,7 +48,7 @@ void ACubeActor::BeginPlay()
                 
                 if (NewCube && NewCube->GetStaticMeshComponent())
                 {
-					UE_LOG(LogTemp, Error, TEXT("Spawned Cube at %s"), *Position.ToString());
+					UE_LOG(LogTemp, Warning, TEXT("Spawned Cube at %s"), *Position.ToString());
                     NewCube->GetStaticMeshComponent()->SetStaticMesh(CubeMesh);  // Referencing CubeMesh here
                     NewCube->GetStaticMeshComponent()->SetMobility(EComponentMobility::Movable);  // Set mobility to Movable
                     Cubes[i][j][k] = NewCube;
@@ -57,20 +57,26 @@ void ACubeActor::BeginPlay()
                     CubesAtLayer[6 + k].push_back(NewCube);
                     
                     if (j == 1 && k == 1) {
-                        NormalsAtLayer[0 + i] = NewCube->GetActorForwardVector();
+                        NormalsAtLayer[0 + i] = FVector(1, 0, 0);
+                        CentersAtLayer[0 + i] = NewCube->GetActorLocation();
+                        UE_LOG(LogTemp, Warning, TEXT("CentersAtLayer[%d][%d][%d]: %s"), i, j, k, *CentersAtLayer[0 + i].ToString());
                     }
                     if (i == 1 && k == 1) {
-                        NormalsAtLayer[3 + j] = NewCube->GetActorForwardVector();
+                        NormalsAtLayer[3 + j] = FVector(0, 1, 0);
+                        CentersAtLayer[3 + j] = NewCube->GetActorLocation();
+                        UE_LOG(LogTemp, Warning, TEXT("CentersAtLayer[%d][%d][%d]: %s"), i, j, k, *CentersAtLayer[3 + j].ToString());
                     }
                     if (i == 1 && j == 1) {
-                        NormalsAtLayer[6 + k] = NewCube->GetActorForwardVector();
+                        NormalsAtLayer[6 + k] = FVector(0, 0, 1);
+                        CentersAtLayer[6 + k] = NewCube->GetActorLocation();
+                        UE_LOG(LogTemp, Warning, TEXT("CentersAtLayer[%d][%d][%d]: %s"), i, j, k, *CentersAtLayer[6 + k].ToString());
                     }
                 }
             }
         }
     }
 
-    StartRotation(2, FVector(1, 0, 0), 4.0f); // Rotate middle layer around Z-axis over 1 second
+    StartRotation(8, FVector(1, 0, 0), 4.0f); // Rotate middle layer around Z-axis over 1 second
     UE_LOG(LogTemp, Warning, TEXT("ROTATING!!!!..."));
     UE_LOG(LogTemp, Warning, TEXT("MaxRotationAngle: %f\n"), MaxRotationAngle);
 }
@@ -94,7 +100,7 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
     {
         float DeltaRotation = RotationSpeed * DeltaTime;
         RotationAngle += DeltaRotation;
-        UE_LOG(LogTemp, Warning, TEXT("Angle: %f \t Delta: %f"), RotationAngle, DeltaRotation);
+        // UE_LOG(LogTemp, Warning, TEXT("Angle: %f \t Delta: %f"), RotationAngle, DeltaRotation);
 
         if (RotationAngle >= MaxRotationAngle)
         {
@@ -105,7 +111,8 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
         }
 
         FQuat QuatRotation = FQuat(RotationAxis, FMath::DegreesToRadians(DeltaRotation));
-        FVector RotationCenter = FVector(1420.000000,1210.000000,1210.000000);
+        // FVector RotationCenter = FVector(1420.000000,1210.000000,1210.000000);
+        FVector RotationCenter = CentersAtLayer[LayerToRotate];
 
         FVector EndPoint;
 
@@ -117,7 +124,7 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
                 CubeToRotate->SetActorLocation(RotationCenter + RotatedPosition);
                 CubeToRotate->AddActorLocalRotation(QuatRotation);
 
-                EndPoint = CubeToRotate->GetActorLocation() +  CubeToRotate->GetActorForwardVector() * 1000.0f; // Extend the line along the rotation axis
+                EndPoint = CubeToRotate->GetActorLocation() + CubeToRotate->GetActorForwardVector() * 1000.0f; // Extend the line along the rotation axis
                 DrawDebugLine(
                     GetWorld(),
                     CubeToRotate->GetActorLocation(),
@@ -154,7 +161,7 @@ void ACubeActor::StartRotation(int LayerIndex, FVector Axis, float Duration)
     {
         bIsRotating = true;
         LayerToRotate = LayerIndex;
-        RotationAxis = Axis;
+        RotationAxis = NormalsAtLayer[LayerIndex];
         UE_LOG(LogTemp, Warning, TEXT("RotationAxis: %s"), *RotationAxis.ToString());
         RotationAxis.Normalize(1.0);
         UE_LOG(LogTemp, Warning, TEXT("RotationAxis: %s"), *RotationAxis.ToString());
