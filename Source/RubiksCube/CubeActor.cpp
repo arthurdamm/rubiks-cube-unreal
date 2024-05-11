@@ -75,7 +75,7 @@ void ACubeActor::BeginPlay()
     }
 
     // StartRotation(8, FVector(1, 0, 0), 4.0f); // Rotate middle layer around Z-axis over 1 second
-    for (int layer = 5; layer <= 7; layer++) {
+    for (int layer = 0; layer <= 8; layer++) {
         RotationsQueue.Enqueue(layer);
     }
     UE_LOG(LogTemp, Warning, TEXT("ROTATING!!!!..."));
