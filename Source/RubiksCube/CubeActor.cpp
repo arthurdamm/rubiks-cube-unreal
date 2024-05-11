@@ -15,10 +15,9 @@ ACubeActor::ACubeActor()
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshObj(TEXT("StaticMesh'/Game/SM_RubiksCube.SM_RubiksCube'"));
     if (MeshObj.Succeeded())
     {
-		UE_LOG(LogTemp, Warning, TEXT("S!M Succeeded"));
         CubeMesh = MeshObj.Object;
     } else {
-		UE_LOG(LogTemp, Warning, TEXT("S!M FAILED"));
+		UE_LOG(LogTemp, Warning, TEXT("MeshObj: FAILED"));
 	}
 }
 
@@ -28,7 +27,6 @@ void ACubeActor::BeginPlay()
 	Super::BeginPlay();
 
     StartTime = FPlatformTime::Seconds();
-
 	SetActorLocation(StartLocation);
 	FVector BasePosition = StartLocation;
 	UE_LOG(LogTemp, Warning, TEXT("Starting CubeActor location: %s"), *BasePosition.ToString());
@@ -76,7 +74,10 @@ void ACubeActor::BeginPlay()
         }
     }
 
-    StartRotation(8, FVector(1, 0, 0), 4.0f); // Rotate middle layer around Z-axis over 1 second
+    // StartRotation(8, FVector(1, 0, 0), 4.0f); // Rotate middle layer around Z-axis over 1 second
+    for (int layer = 5; layer <= 7; layer++) {
+        RotationsQueue.Enqueue(layer);
+    }
     UE_LOG(LogTemp, Warning, TEXT("ROTATING!!!!..."));
     UE_LOG(LogTemp, Warning, TEXT("MaxRotationAngle: %f\n"), MaxRotationAngle);
 }
@@ -96,6 +97,13 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
         return;
     }
 
+    if (!bIsRotating && !RotationsQueue.IsEmpty()) {
+        int dequeuedLayer = 0;
+        if (!RotationsQueue.Dequeue(dequeuedLayer)) {
+            UE_LOG(LogTemp, Error, TEXT("RotationsQueue.Dequeue failed!"));
+        }
+        StartRotation(dequeuedLayer);
+    }
     if (bIsRotating)
     {
         float DeltaRotation = RotationSpeed * DeltaTime;
@@ -111,10 +119,10 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
         }
 
         FQuat QuatRotation = FQuat(RotationAxis, FMath::DegreesToRadians(DeltaRotation));
-        // FVector RotationCenter = FVector(1420.000000,1210.000000,1210.000000);
         FVector RotationCenter = CentersAtLayer[LayerToRotate];
 
         FVector EndPoint;
+        UE_LOG(LogTemp, Warning, TEXT("Rotation Center: %s"), *RotationCenter.ToString());
 
         for (AStaticMeshActor* CubeToRotate : CubesAtLayer[LayerToRotate]) {
             if (CubeToRotate)
@@ -125,16 +133,16 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
                 CubeToRotate->AddActorLocalRotation(QuatRotation);
 
                 EndPoint = CubeToRotate->GetActorLocation() + CubeToRotate->GetActorForwardVector() * 1000.0f; // Extend the line along the rotation axis
-                DrawDebugLine(
-                    GetWorld(),
-                    CubeToRotate->GetActorLocation(),
-                    EndPoint,
-                    FColor::Red,
-                    false, // Persistent lines
-                    0.1,   // Lifetime
-                    0,     // Depth priority
-                    10.0   // Thickness
-                );
+                // DrawDebugLine(
+                //     GetWorld(),
+                //     CubeToRotate->GetActorLocation(),
+                //     EndPoint,
+                //     FColor::Red,
+                //     false, // Persistent lines
+                //     0.1,   // Lifetime
+                //     0,     // Depth priority
+                //     10.0   // Thickness
+                // );
             }
         }
 
@@ -155,21 +163,19 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
 
 // In CubeActor.cpp
 
-void ACubeActor::StartRotation(int LayerIndex, FVector Axis, float Duration)
+void ACubeActor::StartRotation(int LayerIndex)
 {
+    UE_LOG(LogTemp, Warning, TEXT("StartRotation: %d\t%lf"), LayerIndex, FPlatformTime::Seconds() - StartTime);
     if (!bIsRotating)
     {
         bIsRotating = true;
         LayerToRotate = LayerIndex;
         RotationAxis = NormalsAtLayer[LayerIndex];
         UE_LOG(LogTemp, Warning, TEXT("RotationAxis: %s"), *RotationAxis.ToString());
-        RotationAxis.Normalize(1.0);
-        UE_LOG(LogTemp, Warning, TEXT("RotationAxis: %s"), *RotationAxis.ToString());
-        RotationAxis = RotationAxis.GetSafeNormal(1.0);
-        UE_LOG(LogTemp, Warning, TEXT("RotationAxis: %s"), *RotationAxis.ToString());
+        float Duration = 1.0f;
         RotationSpeed = 90.0f / Duration; // Calculate speed based on duration
         RotationAngle = 0.0f;
-        TargetRotation = FQuat(Axis, FMath::DegreesToRadians(90.0f));
+        TargetRotation = FQuat(RotationAxis, FMath::DegreesToRadians(90.0f));
     }
 }
 

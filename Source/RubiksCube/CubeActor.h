@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/StaticMeshActor.h"
 #include "GameFramework/Actor.h"
+#include "Containers/Queue.h"
 #include "CubeActor.generated.h"
 
 UCLASS()
@@ -43,6 +44,9 @@ public:
     std::vector<AStaticMeshActor*> CubesAtLayer[9];
     FVector NormalsAtLayer[9];
     FVector CentersAtLayer[9];
+    TQueue<int> RotationsQueue;
+
+
 
 private:
     bool bIsRotating = false;
@@ -55,6 +59,6 @@ private:
 
 
 public:
-    void StartRotation(int LayerIndex, FVector Axis, float Duration);
+    void StartRotation(int LayerIndex);
 	void MaybeRotate(float DeltaTime);
 };
