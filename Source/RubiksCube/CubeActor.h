@@ -65,6 +65,6 @@ public:
     void StartRotation(int LayerIndex);
 	void MaybeRotate(float DeltaTime);
     void PopulateCubesGrid();
-    std::vector<AStaticMeshActor *>* GetCubesInLayer(int layerIndex);
+    std::vector<AStaticMeshActor *> GetCubesInLayer(int layerIndex);
     int dtoi(double n);
 };

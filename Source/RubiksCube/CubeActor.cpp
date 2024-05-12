@@ -72,7 +72,7 @@ void ACubeActor::BeginPlay()
         }
     }
 
-    for (int layer = 2; layer <= 3; layer++) {
+    for (int layer = 0; layer <= 8; layer++) {
         RotationsQueue.Enqueue(layer);
     }
     UE_LOG(LogTemp, Warning, TEXT("ROTATING!!!!..."));
@@ -90,8 +90,8 @@ void ACubeActor::PopulateCubesGrid() {
     }   
 }
 
-std::vector<AStaticMeshActor *>* ACubeActor::GetCubesInLayer(int layerIndex) {
-    std::vector<AStaticMeshActor *>* CubesInLayer = new std::vector<AStaticMeshActor *>;
+std::vector<AStaticMeshActor *> ACubeActor::GetCubesInLayer(int layerIndex) {
+    std::vector<AStaticMeshActor *> CubesInLayer;
     UE_LOG(LogTemp, Error, TEXT("GetCubesInLayer(%d)"), layerIndex);
     for (int a = 0; a <= 2; a++) {
         for (int b = 0; b <= 2; b++) {
@@ -99,17 +99,17 @@ std::vector<AStaticMeshActor *>* ACubeActor::GetCubesInLayer(int layerIndex) {
             if (layerIndex <= 2) {
                 Cube = Cubes[layerIndex][a][b];
             } else if (layerIndex <= 5) {
-                Cube = Cubes[a][layerIndex][b];
+                Cube = Cubes[a][layerIndex - 3][b];
             } else if (layerIndex <= 8) {
-                Cube = Cubes[a][b][layerIndex];
+                Cube = Cubes[a][b][layerIndex - 6];
             } else {
                 UE_LOG(LogTemp, Error, TEXT("ERROR: a:%d b:%d layerIndex:%d"), a, b, layerIndex);
             }
             // UE_LOG(LogTemp, Error, TEXT("Cube: %lu"), Cube);
-            CubesInLayer->push_back(Cube);
+            CubesInLayer.push_back(Cube);
         }
     }
-    for (AStaticMeshActor * c : *CubesInLayer) {
+    for (AStaticMeshActor * c : CubesInLayer) {
         // UE_LOG(LogTemp, Error, TEXT("PRINT: %lu"), c);
     }
     return CubesInLayer;    
@@ -160,7 +160,7 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
 
         // UE_LOG(LogTemp, Warning, TEXT("Rotating cubes: %d"),  GetCubesInLayer(LayerToRotate)->size());
         int i = 0;
-        for (AStaticMeshActor* CubeToRotate : *GetCubesInLayer(LayerToRotate)) {
+        for (AStaticMeshActor* CubeToRotate : GetCubesInLayer(LayerToRotate)) {
             if (CubeToRotate)
             {
                 i++;
