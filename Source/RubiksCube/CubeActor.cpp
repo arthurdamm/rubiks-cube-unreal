@@ -49,10 +49,8 @@ void ACubeActor::BeginPlay()
 					UE_LOG(LogTemp, Warning, TEXT("Spawned Cube at %s"), *Position.ToString());
                     NewCube->GetStaticMeshComponent()->SetStaticMesh(CubeMesh);  // Referencing CubeMesh here
                     NewCube->GetStaticMeshComponent()->SetMobility(EComponentMobility::Movable);  // Set mobility to Movable
-                    Cubes[i][j][k] = NewCube;
-                    CubesAtLayer[i].push_back(NewCube);
-                    CubesAtLayer[3 + j].push_back(NewCube);
-                    CubesAtLayer[6 + k].push_back(NewCube);
+
+                    CubesVector.push_back(NewCube);
                     
                     if (j == 1 && k == 1) {
                         NormalsAtLayer[0 + i] = FVector(1, 0, 0);
@@ -74,14 +72,48 @@ void ACubeActor::BeginPlay()
         }
     }
 
-    // StartRotation(8, FVector(1, 0, 0), 4.0f); // Rotate middle layer around Z-axis over 1 second
-    for (int layer = 0; layer <= 8; layer++) {
+    for (int layer = 2; layer <= 3; layer++) {
         RotationsQueue.Enqueue(layer);
     }
     UE_LOG(LogTemp, Warning, TEXT("ROTATING!!!!..."));
     UE_LOG(LogTemp, Warning, TEXT("MaxRotationAngle: %f\n"), MaxRotationAngle);
+    PopulateCubesGrid();
+
 }
 
+void ACubeActor::PopulateCubesGrid() {
+    for (AStaticMeshActor* Cube : CubesVector) {
+        FVector gridPosition = (Cube->GetActorLocation() - StartLocation) / CubeEdgeLength;
+        int x = dtoi(gridPosition.X), y = dtoi(gridPosition.Y), z = dtoi(gridPosition.Z);
+        UE_LOG(LogTemp, Warning, TEXT("%s -> %s -> [%d][%d][%d]"), *Cube->GetActorLocation().ToString(), *gridPosition.ToString(), x, y, z);
+        Cubes[x][y][z] = Cube;
+    }   
+}
+
+std::vector<AStaticMeshActor *>* ACubeActor::GetCubesInLayer(int layerIndex) {
+    std::vector<AStaticMeshActor *>* CubesInLayer = new std::vector<AStaticMeshActor *>;
+    UE_LOG(LogTemp, Error, TEXT("GetCubesInLayer(%d)"), layerIndex);
+    for (int a = 0; a <= 2; a++) {
+        for (int b = 0; b <= 2; b++) {
+            AStaticMeshActor *Cube = NULL;
+            if (layerIndex <= 2) {
+                Cube = Cubes[layerIndex][a][b];
+            } else if (layerIndex <= 5) {
+                Cube = Cubes[a][layerIndex][b];
+            } else if (layerIndex <= 8) {
+                Cube = Cubes[a][b][layerIndex];
+            } else {
+                UE_LOG(LogTemp, Error, TEXT("ERROR: a:%d b:%d layerIndex:%d"), a, b, layerIndex);
+            }
+            // UE_LOG(LogTemp, Error, TEXT("Cube: %lu"), Cube);
+            CubesInLayer->push_back(Cube);
+        }
+    }
+    for (AStaticMeshActor * c : *CubesInLayer) {
+        // UE_LOG(LogTemp, Error, TEXT("PRINT: %lu"), c);
+    }
+    return CubesInLayer;    
+}
 
 // In CubeActor.cpp
 
@@ -115,6 +147,8 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
             DeltaRotation -= (RotationAngle - MaxRotationAngle);
             RotationAngle = MaxRotationAngle;
             bIsRotating = false; // Stop rotation after 90 degrees
+            StartTime = FPlatformTime::Seconds();
+
             UE_LOG(LogTemp, Warning, TEXT("ROTATION stopped"));
         }
 
@@ -122,29 +156,35 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
         FVector RotationCenter = CentersAtLayer[LayerToRotate];
 
         FVector EndPoint;
-        UE_LOG(LogTemp, Warning, TEXT("Rotation Center: %s"), *RotationCenter.ToString());
+        // UE_LOG(LogTemp, Warning, TEXT("Rotation Center: %s"), *RotationCenter.ToString());
 
-        for (AStaticMeshActor* CubeToRotate : CubesAtLayer[LayerToRotate]) {
+        // UE_LOG(LogTemp, Warning, TEXT("Rotating cubes: %d"),  GetCubesInLayer(LayerToRotate)->size());
+        int i = 0;
+        for (AStaticMeshActor* CubeToRotate : *GetCubesInLayer(LayerToRotate)) {
             if (CubeToRotate)
             {
+                i++;
                 FVector RelativePosition = CubeToRotate->GetActorLocation() - RotationCenter;
                 FVector RotatedPosition = QuatRotation.RotateVector(RelativePosition);
                 CubeToRotate->SetActorLocation(RotationCenter + RotatedPosition);
                 CubeToRotate->AddActorLocalRotation(QuatRotation);
 
                 EndPoint = CubeToRotate->GetActorLocation() + CubeToRotate->GetActorForwardVector() * 1000.0f; // Extend the line along the rotation axis
-                // DrawDebugLine(
-                //     GetWorld(),
-                //     CubeToRotate->GetActorLocation(),
-                //     EndPoint,
-                //     FColor::Red,
-                //     false, // Persistent lines
-                //     0.1,   // Lifetime
-                //     0,     // Depth priority
-                //     10.0   // Thickness
-                // );
+                DrawDebugLine(
+                    GetWorld(),
+                    CubeToRotate->GetActorLocation(),
+                    EndPoint,
+                    FColor::Red,
+                    false, // Persistent lines
+                    0.1,   // Lifetime
+                    0,     // Depth priority
+                    10.0   // Thickness
+                );
+            } else {
+                // UE_LOG(LogTemp, Error, TEXT("NULL PTR!"));
             }
         }
+        // UE_LOG(LogTemp, Warning, TEXT("Rotated this many: %d"), i);
 
         EndPoint = RotationCenter + RotationAxis * 1000.0f; // Extend the line along the rotation axis
         DrawDebugLine(
@@ -158,6 +198,9 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
             10.0   // Thickness
         );
 
+    if (!bIsRotating) {
+        PopulateCubesGrid();
+    }
     }
 }
 
@@ -179,4 +222,6 @@ void ACubeActor::StartRotation(int LayerIndex)
     }
 }
 
-
+int ACubeActor::dtoi(double n) {
+    return static_cast<int>(fabs(round(n)));
+}

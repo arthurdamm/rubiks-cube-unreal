@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <cmath>
+
 #include "CoreMinimal.h"
 #include "Engine/StaticMeshActor.h"
 #include "GameFramework/Actor.h"
@@ -42,6 +44,7 @@ public:
 	AStaticMeshActor* Cubes[3][3][3];
 
     std::vector<AStaticMeshActor*> CubesAtLayer[9];
+    std::vector<AStaticMeshActor*> CubesVector;
     FVector NormalsAtLayer[9];
     FVector CentersAtLayer[9];
     TQueue<int> RotationsQueue;
@@ -61,4 +64,7 @@ private:
 public:
     void StartRotation(int LayerIndex);
 	void MaybeRotate(float DeltaTime);
+    void PopulateCubesGrid();
+    std::vector<AStaticMeshActor *>* GetCubesInLayer(int layerIndex);
+    int dtoi(double n);
 };
