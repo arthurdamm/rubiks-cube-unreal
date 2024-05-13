@@ -67,4 +67,5 @@ public:
     void PopulateCubesGrid();
     std::vector<AStaticMeshActor *> GetCubesInLayer(int layerIndex);
     int dtoi(double n);
+    void RecalculateRotationCenters();
 };

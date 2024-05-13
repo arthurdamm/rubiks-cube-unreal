@@ -75,6 +75,9 @@ void ACubeActor::BeginPlay()
     for (int layer = 0; layer <= 8; layer++) {
         RotationsQueue.Enqueue(layer);
     }
+    for (int layer = 8; layer >= 0; layer--) {
+        RotationsQueue.Enqueue(layer);
+    }
     UE_LOG(LogTemp, Warning, TEXT("ROTATING!!!!..."));
     UE_LOG(LogTemp, Warning, TEXT("MaxRotationAngle: %f\n"), MaxRotationAngle);
     PopulateCubesGrid();
@@ -156,7 +159,7 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
         FVector RotationCenter = CentersAtLayer[LayerToRotate];
 
         FVector EndPoint;
-        // UE_LOG(LogTemp, Warning, TEXT("Rotation Center: %s"), *RotationCenter.ToString());
+        UE_LOG(LogTemp, Warning, TEXT("Rotation Center: %s"), *RotationCenter.ToString());
 
         // UE_LOG(LogTemp, Warning, TEXT("Rotating cubes: %d"),  GetCubesInLayer(LayerToRotate)->size());
         int i = 0;
@@ -167,7 +170,7 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
                 FVector RelativePosition = CubeToRotate->GetActorLocation() - RotationCenter;
                 FVector RotatedPosition = QuatRotation.RotateVector(RelativePosition);
                 CubeToRotate->SetActorLocation(RotationCenter + RotatedPosition);
-                CubeToRotate->AddActorLocalRotation(QuatRotation);
+                CubeToRotate->AddActorWorldRotation(QuatRotation);
 
                 EndPoint = CubeToRotate->GetActorLocation() + CubeToRotate->GetActorForwardVector() * 1000.0f; // Extend the line along the rotation axis
                 DrawDebugLine(
@@ -198,9 +201,10 @@ void ACubeActor::MaybeRotate(float DeltaTime) {
             10.0   // Thickness
         );
 
-    if (!bIsRotating) {
-        PopulateCubesGrid();
-    }
+        if (!bIsRotating) {
+            PopulateCubesGrid();
+            // RecalculateRotationCenters();
+        }
     }
 }
 
@@ -224,4 +228,16 @@ void ACubeActor::StartRotation(int LayerIndex)
 
 int ACubeActor::dtoi(double n) {
     return static_cast<int>(fabs(round(n)));
+}
+
+void ACubeActor::RecalculateRotationCenters() {
+    for (int i = 0; i < 9; i++) { // assuming 9 layers for a 3x3 Rubik's cube
+        FVector newCenter = FVector::ZeroVector;
+        auto cubesInLayer = GetCubesInLayer(i);
+        for (auto* cube : cubesInLayer) {
+            newCenter += cube->GetActorLocation();
+        }
+        newCenter /= cubesInLayer.size();
+        CentersAtLayer[i] = newCenter;
+    }
 }
