@@ -41,6 +41,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "Rubik's Cube")
     float MaxRotationAngle = 90;
 
+    UPROPERTY(EditAnywhere, Category = "Rubik's Cube")
+    float rotationDelay = 0.25f;
+
 	AStaticMeshActor* Cubes[3][3][3];
 
     std::vector<AStaticMeshActor*> CubesAtLayer[9];
