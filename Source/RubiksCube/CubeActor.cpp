@@ -12,10 +12,11 @@ ACubeActor::ACubeActor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshObj(TEXT("StaticMesh'/Game/SM_RubiksCube.SM_RubiksCube'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshObj(CUBE_MESH);
     if (MeshObj.Succeeded())
     {
         CubeMesh = MeshObj.Object;
+        UE_LOG(LogTemp, Warning, TEXT("MeshObj: SUCCEEDED"));
     } else {
 		UE_LOG(LogTemp, Warning, TEXT("MeshObj: FAILED"));
 	}
@@ -29,7 +30,7 @@ void ACubeActor::BeginPlay()
     StartTime = FPlatformTime::Seconds();
 	SetActorLocation(StartLocation);
 	FVector BasePosition = StartLocation;
-	UE_LOG(LogTemp, Warning, TEXT("!Starting CubeActor location: %s"), *BasePosition.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("---Starting CubeActor location: %s"), *BasePosition.ToString());
 
     for (int i = 0; i < 3; i++)
     {

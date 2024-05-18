@@ -10,6 +10,8 @@
 #include "Containers/Queue.h"
 #include "CubeActor.generated.h"
 
+#define CUBE_MESH TEXT("StaticMesh'/Game/SM_RubiksCube.SM_RubiksCube'")
+
 UCLASS()
 class RUBIKSCUBE_API ACubeActor : public AActor
 {
@@ -46,7 +48,6 @@ public:
 
 	AStaticMeshActor* Cubes[3][3][3];
 
-    std::vector<AStaticMeshActor*> CubesAtLayer[9];
     std::vector<AStaticMeshActor*> CubesVector;
     FVector NormalsAtLayer[9];
     FVector CentersAtLayer[9];
